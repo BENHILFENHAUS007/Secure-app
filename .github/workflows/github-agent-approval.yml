@@ -1,0 +1,59 @@
+name: GitHub Agent Approval Flow
+
+on:
+  workflow_dispatch:
+    inputs:
+      step_name:
+        description: "Logical change step name"
+        required: true
+        type: string
+      mode:
+        description: "Run in propose (preview) or apply (commit/push) mode"
+        required: true
+        default: propose
+        type: choice
+        options:
+          - propose
+          - apply
+      files_hint:
+        description: "Comma-separated file list expected to change"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  propose:
+    name: Propose change step
+    if: ${{ inputs.mode == 'propose' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show proposed step
+        run: |
+          echo "## Proposed Change" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Step: ${{ inputs.step_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Mode: propose (no commit/push)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Files hint: ${{ inputs.files_hint || 'not provided' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Approve this step by rerunning workflow with mode=apply." >> "$GITHUB_STEP_SUMMARY"
+
+  apply:
+    name: Apply approved step
+    if: ${{ inputs.mode == 'apply' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: production-approval
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Approval summary
+        run: |
+          echo "## Approved Change" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Step: ${{ inputs.step_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Mode: apply" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Files hint: ${{ inputs.files_hint || 'not provided' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "This run is intentionally gated by the production-approval environment." >> "$GITHUB_STEP_SUMMARY"
