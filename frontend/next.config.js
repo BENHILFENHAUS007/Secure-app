@@ -8,11 +8,13 @@ const withPWA = require('next-pwa')({
   disable: process.env.NODE_ENV === 'development' || isGithubPages,
 });
 
-module.exports = withPWA({
+const nextConfig = {
   reactStrictMode: true,
   output: isGithubPages ? 'export' : undefined,
   trailingSlash: isGithubPages,
   images: { unoptimized: true },
   basePath,
   assetPrefix: basePath || undefined,
-});
+};
+
+module.exports = withPWA(nextConfig);
